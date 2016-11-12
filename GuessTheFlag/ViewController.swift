@@ -15,7 +15,10 @@ class ViewController: UIViewController {
     @IBOutlet weak var button2: UIButton!
     @IBOutlet weak var button3: UIButton!
     
+    @IBOutlet weak var scoreLbl: UILabel!
+    
     var countries = [String]()
+    var guessedCountries = [String]()
     var score = 0
     var correctAnswer = 0
     
@@ -52,8 +55,10 @@ class ViewController: UIViewController {
     }
 
     func askQuestion(action: UIAlertAction! = nil) {
-        countries = GKRandomSource.sharedRandom().arrayByShufflingObjects(in: countries) as! [String]
-        correctAnswer = GKRandomSource.sharedRandom().nextInt(upperBound: 3)
+        repeat {
+            countries = GKRandomSource.sharedRandom().arrayByShufflingObjects(in: countries) as! [String]
+            correctAnswer = GKRandomSource.sharedRandom().nextInt(upperBound: 3)
+        } while guessedCountries.contains(countries[correctAnswer])
         
         button1.setImage(UIImage(named: countries[0]), for: .normal)
         button2.setImage(UIImage(named: countries[1]), for: .normal)
@@ -66,14 +71,30 @@ class ViewController: UIViewController {
         if sender.tag == correctAnswer {
             title = "Correct!"
             score += 1
+            guessedCountries.append(countries[correctAnswer])
         } else {
             title = "Wrong..."
             score -= 1
         }
+        scoreLbl.text = "\(score)"
         
-        let alert = UIAlertController(title: title, message: "Your score is \(score).", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Continue", style: .default, handler: askQuestion))
-        present(alert, animated: true)
+        if guessedCountries.count == countries.count {
+            let winAlert = UIAlertController(title: "Congrats!", message: "You know all the flags!", preferredStyle: .alert)
+            winAlert.addAction(UIAlertAction(title: "Play again", style: .destructive, handler: playAgain))
+            present(winAlert, animated: true)
+        } else {
+            let alert = UIAlertController(title: title, message: "Try again?", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Continue", style: .default, handler: askQuestion))
+            alert.addAction(UIAlertAction(title: "End", style: .cancel))
+            present(alert, animated: true)
+        }
+    }
+    
+    func playAgain(action: UIAlertAction) {
+        guessedCountries.removeAll()
+        score = 0
+        scoreLbl.text = "\(score)"
+        askQuestion()
     }
 
 }
